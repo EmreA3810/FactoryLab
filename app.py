@@ -53,13 +53,13 @@ def apply_dashboard_theme() -> None:
         .success {{ color: {SUCCESS_GREEN}; }}
         .flip-card {{
             perspective: 1000px;
-            height: 260px;
-            margin-bottom: 12px;
+            height: 320px;
+            margin-bottom: 16px;
         }}
         .flip-card-inner {{
             position: relative;
             width: 100%;
-            height: 260px;
+            height: 320px;
             transition: transform 0.6s;
             transform-style: preserve-3d;
         }}
@@ -69,7 +69,7 @@ def apply_dashboard_theme() -> None:
         .flip-card-front, .flip-card-back {{
             position: absolute;
             width: 100%;
-            height: 260px;
+            height: 320px;
             backface-visibility: hidden;
             background: #15171c;
             border: 1px solid #2a2d34;
@@ -375,6 +375,27 @@ def render_consultant_box() -> None:
     )
 
 
+def render_tech_structure() -> None:
+    """Teknik dosya yapısı tablosu."""
+    table = pd.DataFrame(
+        [
+            {
+                "Dosya": "data.py",
+                "İçerik": "Adayların maaşları, yetenekleri (Teknik, Analiz, Takım) ve istasyon gereksinimleri.",
+            },
+            {
+                "Dosya": "solver.py",
+                "İçerik": "GAMSPy kodu. Uzmanlık ve sinerji kısıtlarını içeren matematiksel model.",
+            },
+            {
+                "Dosya": "app.py",
+                "İçerik": "Streamlit arayüzü. Görseller ve GAMS motorunun birleştiği yer.",
+            },
+        ]
+    )
+    st.table(table)
+
+
 def render_person_card(
     name: str,
     context_key: str,
@@ -388,8 +409,7 @@ def render_person_card(
     if flip_key not in st.session_state:
         st.session_state[flip_key] = False
 
-    with st.container():
-        flip_state = st.toggle("Kartı Çevir", key=flip_key)
+    flip_state = st.session_state.get(flip_key, False)
     front_trait = info["hidden_trait"] if info["discovered"] else "Sırrı Bilinmiyor"
     back_trait = (
         info["trait_description"]
@@ -433,6 +453,8 @@ def render_person_card(
     </div>
     """
     st.markdown(card_html, unsafe_allow_html=True)
+    st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
+    st.toggle("Kartı Çevir", key=flip_key)
     st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
 
     if show_action:
@@ -731,6 +753,8 @@ def main() -> None:
             render_crisis(level)
     with main_cols[1]:
         render_consultant_box()
+        with st.expander("Teknik Dosya Yapısı"):
+            render_tech_structure()
 
 
 if __name__ == "__main__":
