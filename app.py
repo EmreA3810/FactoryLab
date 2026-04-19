@@ -8,6 +8,7 @@ import streamlit as st
 import pandas as pd
 
 from data import EMPLOYEE_POOL, LEVELS, discover_employee_trait
+from solver import get_gams_recommendation
 
 DEPARTMENTS = [
     "Departman A (Üretim & Mekanik)",
@@ -294,37 +295,6 @@ def assignment_score(assignments: Dict[str, str]) -> float:
     return total
 
 
-def get_gams_recommendation(
-    assigned_employees: Dict[str, str],
-    departments: List[str],
-) -> Tuple[float, Dict[str, str], bool]:
-    """Mock GAMS danışmanı - gerçek solver daha sonra eklenecek."""
-    employees = st.session_state.hired
-    best_score = -1.0
-    best_assignments = {dept: "Boş" for dept in departments}
-
-    dept_a, dept_b = departments
-    eligible_a = [e for e in employees if eligible_for_department(e, dept_a)]
-    eligible_b = [e for e in employees if eligible_for_department(e, dept_b)]
-
-    if not eligible_a or not eligible_b:
-        return 0.0, best_assignments, False
-
-    for emp_a in eligible_a:
-        for emp_b in eligible_b:
-            if emp_a == emp_b:
-                continue
-            if average_teamwork([emp_a, emp_b]) < 70:
-                continue
-            candidate = {dept_a: emp_a, dept_b: emp_b}
-            score = assignment_score(candidate)
-            if score > best_score:
-                best_score = score
-                best_assignments = dict(candidate)
-
-    if best_score < 0:
-        return 0.0, best_assignments, False
-    return max(best_score, 0.0), best_assignments, True
 
 
 def render_sticky_top_bar(budget: int, efficiency: float) -> None:
@@ -554,8 +524,9 @@ def update_consultant_message(assignments: Dict[str, str]) -> None:
         st.session_state.last_assignments = dict(assignments)
         return
 
+    selected = {name: EMPLOYEE_POOL[name] for name in st.session_state.hired}
     gams_score, gams_assignments, feasible = get_gams_recommendation(
-        assignments, DEPARTMENTS
+        selected, DEPARTMENTS
     )
     if not feasible:
         st.session_state.consultant_message = (
@@ -644,8 +615,9 @@ def render_crisis(level: Dict[str, object]) -> None:
             st.warning("Lütfen her iki departmana da bir personel ata.")
             return
 
+        selected = {name: EMPLOYEE_POOL[name] for name in st.session_state.hired}
         gams_score, gams_assignments, feasible = get_gams_recommendation(
-            assignments, DEPARTMENTS
+            selected, DEPARTMENTS
         )
         if not feasible:
             st.error("Mühendislik Çıkmazı: Uzmanlık veya sinerji kısıtı sağlanamadı.")
