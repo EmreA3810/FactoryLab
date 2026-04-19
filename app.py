@@ -11,8 +11,8 @@ from data import EMPLOYEE_POOL, LEVELS, discover_employee_trait
 from solver import get_gams_recommendation
 
 DEPARTMENTS = [
-    "Departman A (Üretim & Mekanik)",
-    "Departman B (Ar-Ge & Planlama)",
+    "Department A (Production & Mechanical)",
+    "Department B (R&D & Planning)",
 ]
 GAMS_BLUE = "#2f81f7"
 SUCCESS_GREEN = "#3fb950"
@@ -146,9 +146,9 @@ def initialize_state() -> None:
     if "hires_at_level_start" not in st.session_state:
         st.session_state.hires_at_level_start = len(st.session_state.hired)
     if "assignments" not in st.session_state:
-        st.session_state.assignments = {dept: "Seçiniz" for dept in DEPARTMENTS}
+        st.session_state.assignments = {dept: "Select" for dept in DEPARTMENTS}
     if "consultant_message" not in st.session_state:
-        st.session_state.consultant_message = "GAMS Danışmanı hazır."
+        st.session_state.consultant_message = "GAMS Consultant is ready."
     if "last_assignments" not in st.session_state:
         st.session_state.last_assignments = dict(st.session_state.assignments)
     if "city_health" not in st.session_state:
@@ -163,6 +163,8 @@ def initialize_state() -> None:
         st.session_state.performance_bonus = 0
     if "last_bonus_awarded_day" not in st.session_state:
         st.session_state.last_bonus_awarded_day = 0
+    if "current_crisis" not in st.session_state:
+        st.session_state.current_crisis = LEVELS[st.session_state.level]["crisis_name"]
 
 
 def reset_level(level_id: int) -> None:
@@ -175,15 +177,16 @@ def reset_level(level_id: int) -> None:
     )
     st.session_state.budget = st.session_state.level_budget
     st.session_state.hires_at_level_start = len(st.session_state.hired)
-    st.session_state.assignments = {dept: "Seçiniz" for dept in DEPARTMENTS}
+    st.session_state.assignments = {dept: "Select" for dept in DEPARTMENTS}
     st.session_state.last_assignments = dict(st.session_state.assignments)
-    st.session_state.consultant_message = "GAMS Danışmanı hazır."
+    st.session_state.consultant_message = "GAMS Consultant is ready."
     st.session_state.last_city_health = st.session_state.city_health
     st.session_state.performance_bonus = 0
+    st.session_state.current_crisis = level["crisis_name"]
 
 
 def trait_team_effect(employee_name: str, team_size: int) -> int:
-    """Takım çalışması için basit trait etkileri."""
+    """Simple teamwork effects for traits."""
     trait = EMPLOYEE_POOL[employee_name].get("hidden_trait", "")
     if not EMPLOYEE_POOL[employee_name].get("discovered"):
         return 0
@@ -206,14 +209,14 @@ def trait_team_effect(employee_name: str, team_size: int) -> int:
 
 
 def eligible_for_department(employee_name: str, department: str) -> bool:
-    """Departman uzmanlık filtresi."""
+    """Department eligibility filter."""
     if department == DEPARTMENTS[0]:
         return int(EMPLOYEE_POOL[employee_name]["skill"]) >= 70
     return int(EMPLOYEE_POOL[employee_name]["analysis"]) >= 60
 
 
 def department_base_score(employee_name: str, department: str) -> float:
-    """Departmana göre temel puan."""
+    """Base score by department."""
     if department == DEPARTMENTS[0]:
         return float(EMPLOYEE_POOL[employee_name]["skill"])
     return float(EMPLOYEE_POOL[employee_name]["analysis"])
@@ -227,7 +230,7 @@ def update_city_health_on_hire(skill_value: int) -> None:
 
 
 def average_teamwork(members: List[str]) -> float:
-    """Takım çalışması ortalaması."""
+    """Average teamwork."""
     members = [m for m in members if m in EMPLOYEE_POOL]
     if not members:
         return 0.0
@@ -247,40 +250,40 @@ def team_chemistry_scores(members: List[str]) -> Tuple[float, float, float]:
 
 
 def build_root_cause(assignments: Dict[str, str]) -> List[str]:
-    """Kriz sonucu için kök neden listesi."""
+    """Root cause list for crisis outcome."""
     reasons: List[str] = []
-    if any(name == "Seçiniz" for name in assignments.values()):
-        reasons.append("Atamalar tamamlanmadı.")
+    if any(name == "Select" for name in assignments.values()):
+        reasons.append("Assignments are incomplete.")
         return reasons
 
     dept_a, dept_b = DEPARTMENTS
     if not any(
         eligible_for_department(name, dept_a) for name in st.session_state.hired
     ):
-        reasons.append("Departman A için uygun teknik puanlı aday yok.")
+        reasons.append("No eligible Technical profile for Department A.")
     if not any(
         eligible_for_department(name, dept_b) for name in st.session_state.hired
     ):
-        reasons.append("Departman B için uygun analiz puanlı aday yok.")
+        reasons.append("No eligible Analytic profile for Department B.")
 
     for department, name in assignments.items():
         if name in EMPLOYEE_POOL and not eligible_for_department(name, department):
-            reasons.append(f"{name}, {department} uzmanlık şartını karşılamıyor.")
+            reasons.append(f"{name} does not meet the requirement for {department}.")
 
     members = [name for name in assignments.values() if name in EMPLOYEE_POOL]
     if members:
         avg_teamwork = average_teamwork(members)
         if avg_teamwork < 70:
             reasons.append(
-                f"Takım çalışması ortalaması {avg_teamwork:.0f} < 70 (sinerji kısıtı)."
+                f"Teamwork average {avg_teamwork:.0f} < 70 (synergy constraint)."
             )
 
     if not reasons:
-        reasons.append("Uzmanlık ve sinerji kısıtları sağlandı, optimizasyon farkı kaldı.")
+        reasons.append("Expertise and synergy constraints passed; optimization gap remains.")
     return reasons
 
 def assignment_score(assignments: Dict[str, str]) -> float:
-    """Departman bazlı takım verimini hesaplar."""
+    """Compute department-based team score."""
     members = [m for m in assignments.values() if m in EMPLOYEE_POOL]
     if not members:
         return 0.0
@@ -304,11 +307,11 @@ def render_sticky_top_bar(budget: int, efficiency: float) -> None:
         <div class="sticky-bar">
             <div class="sticky-grid">
                 <div class="sticky-item">
-                    <div class="muted">Bütçe</div>
+                    <div class="muted">Budget</div>
                     <strong>{budget} ₺</strong>
                 </div>
                 <div class="sticky-item">
-                    <div class="muted">Mevcut Verimlilik</div>
+                    <div class="muted">Current Efficiency</div>
                     <strong>{efficiency:.0f}%</strong>
                 </div>
             </div>
@@ -325,19 +328,19 @@ def render_top_metrics() -> None:
     render_sticky_top_bar(st.session_state.budget, efficiency)
     col1, col2, col3 = st.columns([1.2, 1.2, 2.6])
     with col1:
-        st.metric("Bütçe", f"{st.session_state.budget} ₺")
+        st.metric("Budget", f"{st.session_state.budget} ₺")
     with col2:
-        st.metric("Mevcut Verimlilik", f"{efficiency:.0f}%", f"{delta:+.0f}%")
+        st.metric("Current Efficiency", f"{efficiency:.0f}%", f"{delta:+.0f}%")
     with col3:
-        st.progress(efficiency / 100, text="Şehir Verimliliği")
+        st.progress(efficiency / 100, text="City Efficiency")
 
 
 def render_consultant_box() -> None:
-    """GAMS Danışmanı kutusu."""
+    """GAMS consultant box."""
     st.markdown(
         f"""
         <div class="consultant-box">
-            <strong class="accent">🧠 GAMS Danışmanı</strong>
+            <strong class="accent">🧠 GAMS Consultant</strong>
             <div class="muted" style="margin-top:6px;">{st.session_state.consultant_message}</div>
         </div>
         """,
@@ -346,20 +349,20 @@ def render_consultant_box() -> None:
 
 
 def render_tech_structure() -> None:
-    """Teknik dosya yapısı tablosu."""
+    """Technical file structure table."""
     table = pd.DataFrame(
         [
             {
                 "Dosya": "data.py",
-                "İçerik": "Adayların maaşları, yetenekleri (Teknik, Analiz, Takım) ve istasyon gereksinimleri.",
+                "İçerik": "Candidate salaries, skills (Technical, Analytic, Teamwork) and station requirements.",
             },
             {
                 "Dosya": "solver.py",
-                "İçerik": "GAMSPy kodu. Uzmanlık ve sinerji kısıtlarını içeren matematiksel model.",
+                "İçerik": "GAMSPy code. Mathematical model with expertise and synergy constraints.",
             },
             {
                 "Dosya": "app.py",
-                "İçerik": "Streamlit arayüzü. Görseller ve GAMS motorunun birleştiği yer.",
+                "İçerik": "Streamlit UI. Where visuals and the GAMS engine meet.",
             },
         ]
     )
@@ -384,7 +387,7 @@ def render_person_card(
     back_trait = (
         info["trait_description"]
         if info["discovered"]
-        else "Gizli özellik henüz keşfedilmedi."
+        else "Hidden trait not discovered yet."
     )
     skill_percent = int(info["skill"])
     analysis_percent = int(info["analysis"])
@@ -397,26 +400,26 @@ def render_person_card(
                 <div class="avatar">{info['avatar']}</div>
                 <h4>{name}</h4>
                 <div class="muted">{info['role']}</div>
-                <div><strong>Teknik:</strong> {info['skill']}/100</div>
+                <div><strong>Technical:</strong> {info['skill']}/100</div>
                 <div class="progress" style="margin:6px 0;">
                     <div class="progress-bar" style="width: {skill_percent}%;"></div>
                 </div>
-                <div><strong>Analiz:</strong> {info['analysis']}/100</div>
+                <div><strong>Analytic:</strong> {info['analysis']}/100</div>
                 <div class="progress" style="margin:6px 0;">
                     <div class="progress-bar" style="width: {analysis_percent}%;"></div>
                 </div>
-                <div><strong>Takım Çalışması:</strong> {info['teamwork']}/100</div>
+                <div><strong>Teamwork:</strong> {info['teamwork']}/100</div>
                 <div class="progress" style="margin:6px 0;">
                     <div class="progress-bar" style="width: {teamwork_percent}%;"></div>
                 </div>
-                <div><strong>Maaş:</strong> {info['cost']} ₺</div>
+                <div><strong>Salary:</strong> {info['cost']} ₺</div>
                 <div class="muted" style="margin-top:8px;">
-                    <strong>Gizli Özellik:</strong> {front_trait}
+                    <strong>Hidden Trait:</strong> {front_trait}
                 </div>
             </div>
             <div class="flip-card-back">
                 <div class="avatar">{info['avatar']}</div>
-                <h4>{name} • Gizli Profil</h4>
+                <h4>{name} • Hidden Profile</h4>
                 <div class="muted">{back_trait}</div>
             </div>
         </div>
@@ -424,7 +427,7 @@ def render_person_card(
     """
     st.markdown(card_html, unsafe_allow_html=True)
     st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
-    st.toggle("Kartı Çevir", key=flip_key)
+    st.toggle("Flip Card", key=flip_key)
     st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
 
     if show_action:
@@ -434,14 +437,18 @@ def render_person_card(
 
 def render_recruitment(level: Dict[str, object]) -> None:
     """İK Aşaması."""
-    st.markdown("## İK Aşaması (Recruitment)")
+    level = LEVELS[st.session_state.level]
+    st.markdown("## Recruitment Stage")
     st.write(level["description"])
+    question = level.get("question")
+    if question:
+        st.info(question)
     hire_count = int(level["hire_count"])
     hires_added = len(st.session_state.hired) - st.session_state.hires_at_level_start
     remaining_hires = max(0, hire_count - hires_added)
     st.info(
-        f"Bu seviyede yeni alım hakkı: **{hire_count}** kişi. "
-        f"Seçilen: **{hires_added}** / Kalan: **{remaining_hires}**"
+        f"New hires this level: **{hire_count}**. "
+        f"Selected: **{hires_added}** / Remaining: **{remaining_hires}**"
     )
 
     candidate_names = level["candidates"]
@@ -457,7 +464,7 @@ def render_recruitment(level: Dict[str, object]) -> None:
                     name,
                     context_key="recruit",
                     show_action=True,
-                    action_label="Ekibe Kat",
+                    action_label="Add to Team",
                     action_disabled=already_hired or limit_reached,
                 )
                 if clicked:
@@ -465,14 +472,14 @@ def render_recruitment(level: Dict[str, object]) -> None:
                         st.session_state.budget -= int(info["cost"])
                         st.session_state.hired.append(name)
                         update_city_health_on_hire(int(info["skill"]))
-                        st.session_state.toast_message = f"{name} ekibe katıldı."
+                        st.session_state.toast_message = f"{name} joined the team."
                         st.rerun()
                     else:
-                        st.warning("Bütçe yetersiz. Daha uygun bir aday seçmelisin.")
+                        st.warning("Budget is insufficient. Pick a cheaper candidate.")
 
-    st.markdown("## Ekibe Katılanlar")
+    st.markdown("## Current Team")
     if not st.session_state.hired:
-        st.info("Henüz ekip oluşturulmadı.")
+        st.info("No team members yet.")
     else:
         for row_start in range(0, len(st.session_state.hired), 3):
             roster_cols = st.columns(3)
@@ -480,12 +487,12 @@ def render_recruitment(level: Dict[str, object]) -> None:
                 with col:
                     render_person_card(name, context_key="roster")
 
-    if st.button("Ekibi Kilitle ve Krize Geç", type="primary"):
+    if st.button("Lock Team and Start Crisis", type="primary"):
         if hires_added < hire_count:
-            st.warning("Krize geçmek için bu seviyedeki alım hakkını doldurmalısın.")
+            st.warning("You must use all new hires for this level before proceeding.")
         else:
             st.session_state.stage = "crisis"
-            st.session_state.assignments = {dept: "Seçiniz" for dept in DEPARTMENTS}
+            st.session_state.assignments = {dept: "Select" for dept in DEPARTMENTS}
             st.session_state.last_assignments = dict(st.session_state.assignments)
             st.rerun()
 
@@ -499,10 +506,10 @@ def build_trick_message(
         user_name = user_assignments.get(department)
         if optimal_name != "Boş" and user_name != optimal_name:
             return (
-                f"Trick: **{optimal_name}** için en uygun yer **{department}** görünüyor. "
-                "Uzmanlık filtresi burada daha güçlü çalışıyor."
+                f"Trick: **{optimal_name}** fits best in **{department}**. "
+                "Expertise filters favor this placement."
             )
-    return "Trick: Atamanın küçük iyileştirmelere ihtiyacı var."
+    return "Trick: Minor improvements are still possible."
 
 
 def update_consultant_message(assignments: Dict[str, str]) -> None:
@@ -510,16 +517,16 @@ def update_consultant_message(assignments: Dict[str, str]) -> None:
     if assignments == st.session_state.last_assignments:
         return
 
-    st.session_state.consultant_message = "Analiz ediliyor..."
-    if any(name == "Seçiniz" for name in assignments.values()):
-        st.session_state.consultant_message = "Analiz ediliyor... Atamayı tamamla."
+    st.session_state.consultant_message = "Analyzing..."
+    if any(name == "Select" for name in assignments.values()):
+        st.session_state.consultant_message = "Analyzing... complete the assignments."
         st.session_state.last_assignments = dict(assignments)
         return
 
     members = [name for name in assignments.values() if name in EMPLOYEE_POOL]
     if average_teamwork(members) < 70:
         st.session_state.consultant_message = (
-            "Sinerji Kısıtı: Takım çalışması ortalaması 70'in altında."
+            "Synergy Constraint: Teamwork average is below 70."
         )
         st.session_state.last_assignments = dict(assignments)
         return
@@ -530,7 +537,7 @@ def update_consultant_message(assignments: Dict[str, str]) -> None:
     )
     if not feasible:
         st.session_state.consultant_message = (
-            "Mühendislik Çıkmazı: Uzmanlık filtreleri sağlanamıyor."
+            "Engineering Deadlock: Expertise filters cannot be satisfied."
         )
         st.session_state.last_assignments = dict(assignments)
         return
@@ -541,19 +548,25 @@ def update_consultant_message(assignments: Dict[str, str]) -> None:
             assignments, gams_assignments
         )
     else:
-        st.session_state.consultant_message = "İyi gidiyorsun. Fark oldukça düşük."
+        st.session_state.consultant_message = "Looks good. The gap is minimal."
 
     st.session_state.last_assignments = dict(assignments)
 
 
 def render_crisis(level: Dict[str, object]) -> None:
-    """Kriz aşaması."""
-    st.markdown("## Daily Crisis (The Challenge)")
-    st.subheader(level["crisis_name"])
+    """Crisis stage."""
+    level = LEVELS[st.session_state.level]
+    st.markdown("## Daily Crisis")
+    st.subheader(st.session_state.current_crisis)
+    question = level.get("question")
+    if question:
+        st.info(question)
+    st.caption("Select one eligible person per department, then start the day.")
     st.caption(
-        "Uzmanlık filtreleri: Departman A için Teknik ≥ 70, "
-        "Departman B için Analiz ≥ 60."
+        "Assign specialists to departments. Department A requires Technical ≥ 70, "
+        "Department B requires Analytic ≥ 60. Teamwork average must be ≥ 70."
     )
+    st.caption("Tip: Balance technical and analytic strengths to avoid infeasible setups.")
 
     eligible_a_pool = any(
         eligible_for_department(name, DEPARTMENTS[0]) for name in st.session_state.hired
@@ -563,36 +576,36 @@ def render_crisis(level: Dict[str, object]) -> None:
     )
     if not eligible_a_pool or not eligible_b_pool:
         st.error(
-            "Mühendislik Çıkmazı: Ekip, departman uzmanlıklarına uymuyor. "
-            "Ar-Ge veya Üretim için uygun profil yok."
+            "Engineering Deadlock: The team does not meet department requirements. "
+            "No eligible profile for Production or R&D."
         )
 
-    st.markdown("### Ekip Kartları")
+    st.markdown("### Team Cards")
     for row_start in range(0, len(st.session_state.hired), 3):
         roster_cols = st.columns(3)
         for col, name in zip(roster_cols, st.session_state.hired[row_start:row_start + 3]):
             with col:
                 render_person_card(name, context_key="crisis")
 
-    st.markdown("### Departman Atamaları")
+    st.markdown("### Department Assignments")
     cols = st.columns(2)
     assignments = dict(st.session_state.assignments)
 
     for col, department in zip(cols, DEPARTMENTS):
-        used = {name for s, name in assignments.items() if s != department and name != "Seçiniz"}
+        used = {name for s, name in assignments.items() if s != department and name != "Select"}
         eligible = [
             name
             for name in st.session_state.hired
             if name not in used and eligible_for_department(name, department)
         ]
-        options = ["Seçiniz"] + [
+        options = ["Select"] + [
             name for name in eligible
         ]
         with col:
             selection = st.selectbox(
                 department,
                 options,
-                index=options.index(assignments.get(department, "Seçiniz")),
+                index=options.index(assignments.get(department, "Select")),
                 key=f"assign_{department}",
             )
         assignments[department] = selection
@@ -600,19 +613,19 @@ def render_crisis(level: Dict[str, object]) -> None:
     st.session_state.assignments = assignments
     update_consultant_message(assignments)
 
-    st.markdown("### Takım Kimyası")
+    st.markdown("### Team Chemistry")
     members = [name for name in assignments.values() if name in EMPLOYEE_POOL]
     role_diversity, teamwork_avg, chemistry_overall = team_chemistry_scores(members)
     chem_cols = st.columns(3)
-    chem_cols[0].metric("Rol Çeşitliliği", f"{role_diversity:.0f}%")
-    chem_cols[1].metric("Uyum Skoru", f"{teamwork_avg:.0f}%")
-    chem_cols[2].metric("Genel Kimya", f"{chemistry_overall:.0f}%")
-    st.progress(chemistry_overall / 100, text="Takım Kimyası")
+    chem_cols[0].metric("Role Diversity", f"{role_diversity:.0f}%")
+    chem_cols[1].metric("Teamwork Avg", f"{teamwork_avg:.0f}%")
+    chem_cols[2].metric("Overall Chemistry", f"{chemistry_overall:.0f}%")
+    st.progress(chemistry_overall / 100, text="Team Chemistry")
 
-    st.markdown("## Günün Kararı")
-    if st.button("🔥 Günü Başlat", type="primary"):
-        if any(name == "Seçiniz" for name in assignments.values()):
-            st.warning("Lütfen her iki departmana da bir personel ata.")
+    st.markdown("## Decision")
+    if st.button("🔥 Start Day", type="primary"):
+        if any(name == "Select" for name in assignments.values()):
+            st.warning("Assign one person to each department.")
             return
 
         selected = {name: EMPLOYEE_POOL[name] for name in st.session_state.hired}
@@ -620,8 +633,8 @@ def render_crisis(level: Dict[str, object]) -> None:
             selected, DEPARTMENTS
         )
         if not feasible:
-            st.error("Mühendislik Çıkmazı: Uzmanlık veya sinerji kısıtı sağlanamadı.")
-            st.markdown("### Kök Neden Raporu")
+            st.error("Engineering Deadlock: Expertise or synergy constraints failed.")
+            st.markdown("### Root Cause Report")
             for reason in build_root_cause(assignments):
                 st.warning(f"- {reason}")
             return
@@ -632,11 +645,11 @@ def render_crisis(level: Dict[str, object]) -> None:
             efficiency_score = min(100.0, (user_score / gams_score) * 100)
 
         score_cols = st.columns(3)
-        score_cols[0].metric("Senin Skorun", f"{user_score:.0f}")
+        score_cols[0].metric("Your Score", f"{user_score:.0f}")
         score_cols[1].metric("GAMS Optimum", f"{gams_score:.0f}")
-        score_cols[2].metric("Verimlilik Skoru", f"{efficiency_score:.0f}%")
-        st.progress(efficiency_score / 100, text="Verimlilik Barı")
-        st.caption("Baraj: %80 • Mükemmellik: %90 (+500 ₺ bonus)")
+        score_cols[2].metric("Efficiency Score", f"{efficiency_score:.0f}%")
+        st.progress(efficiency_score / 100, text="Efficiency Bar")
+        st.caption("Threshold: 80% • Excellence: 90% (+500 ₺ bonus)")
 
         st.session_state.last_city_health = st.session_state.city_health
         if efficiency_score < 80:
@@ -653,18 +666,18 @@ def render_crisis(level: Dict[str, object]) -> None:
                 discover_employee_trait(reveal_name)
                 trait_desc = EMPLOYEE_POOL[reveal_name]["trait_description"]
                 st.warning(
-                    f"Keşif: {reveal_name} için gizli özellik açıldı. {trait_desc}"
+                    f"Discovery: {reveal_name}'s hidden trait revealed. {trait_desc}"
                 )
             else:
-                st.warning("GAMS Danışmanı: Baraj altında kaldın, daha iyi bir atama mümkün.")
-            st.markdown("### Kök Neden Raporu")
+                st.warning("GAMS Consultant: Below threshold, a better assignment exists.")
+            st.markdown("### Root Cause Report")
             reasons = build_root_cause(assignments)
-            reasons.append(f"Verimlilik skoru {efficiency_score:.0f}% < 80 barajı.")
+            reasons.append(f"Efficiency score {efficiency_score:.0f}% < 80 threshold.")
             for reason in reasons:
                 st.warning(f"- {reason}")
         else:
             st.session_state.city_health = min(100.0, st.session_state.city_health + 15)
-            st.success("Kriz başarıyla yönetildi! Barajı geçtin.")
+            st.success("Crisis resolved! You passed the threshold.")
             current_day = len(st.session_state.crisis_history) + 1
             if (
                 efficiency_score >= 90
@@ -673,33 +686,38 @@ def render_crisis(level: Dict[str, object]) -> None:
             ):
                 st.session_state.performance_bonus += 500
                 st.session_state.last_bonus_awarded_day = current_day
-                st.info("Mükemmellik Bonus'u: Sonraki seviye için +500 ₺ kazandın.")
+                st.info("Excellence Bonus: +500 ₺ added to next level.")
             if st.session_state.level < max(LEVELS.keys()):
                 next_level = st.session_state.level + 1
                 bonus = LEVELS[next_level].get("bonus_budget", 0) + st.session_state.performance_bonus
                 if bonus:
-                    st.info(f"Yeni seviyede ek bütçe: +{bonus} ₺")
-                if st.button("➡️ Sonraki Seviye"):
+                    st.info(f"Next level budget bonus: +{bonus} ₺")
+                if st.button("➡️ Next Level"):
                     reset_level(next_level)
                     st.rerun()
             else:
-                st.info("Tebrikler! Şimdilik tüm seviyeler tamamlandı.")
+                st.info("Congrats! All levels completed for now.")
 
         st.session_state.crisis_history.append(
             {
-                "Gün": len(st.session_state.crisis_history) + 1,
-                "Senin Skorun": user_score,
+                "Day": len(st.session_state.crisis_history) + 1,
+                "Your Score": user_score,
                 "GAMS Optimum": gams_score,
                 "Verimlilik (%)": efficiency_score,
-                "Şehir Verimliliği": st.session_state.city_health,
+                "City Efficiency": st.session_state.city_health,
             }
         )
 
     if st.session_state.crisis_history:
-        st.markdown("### Kriz Tarihçesi (Son 3 Gün)")
+        st.markdown("### Crisis History (Last 3 Days)")
         history = st.session_state.crisis_history[-3:]
-        df = pd.DataFrame(history).set_index("Gün")
-        st.line_chart(df[["Senin Skorun", "GAMS Optimum", "Şehir Verimliliği", "Verimlilik (%)"]])
+        df = pd.DataFrame(history).set_index("Day")
+        df = df.rename(
+            columns={
+                "Verimlilik (%)": "Efficiency (%)",
+            }
+        )
+        st.line_chart(df[["Your Score", "GAMS Optimum", "City Efficiency", "Efficiency (%)"]])
 
 
 def main() -> None:
@@ -708,9 +726,16 @@ def main() -> None:
     initialize_state()
 
     level = LEVELS[st.session_state.level]
+    hire_count = int(level["hire_count"])
+    hires_added = len(st.session_state.hired) - st.session_state.hires_at_level_start
+    if st.session_state.stage == "crisis" and hires_added < hire_count:
+        st.session_state.stage = "recruitment"
+        level = LEVELS[st.session_state.level]
+    if st.session_state.current_crisis != level["crisis_name"]:
+        st.session_state.current_crisis = level["crisis_name"]
 
     st.title("The Factory Lab 🏭")
-    st.caption("Ekip kur, krizi yönet, fabrikayı optimize et.")
+    st.caption("Build the team, handle the crisis, optimize the factory.")
     render_top_metrics()
 
     if st.session_state.toast_message:
@@ -725,7 +750,7 @@ def main() -> None:
             render_crisis(level)
     with main_cols[1]:
         render_consultant_box()
-        with st.expander("Teknik Dosya Yapısı"):
+        with st.expander("Technical File Structure"):
             render_tech_structure()
 
 

@@ -156,7 +156,8 @@ LEVELS: Dict[int, Dict[str, Any]] = {
     1: {
         "name": "Level 1: Peak Hour Chaos",
         "crisis_name": "Assembly Line Pressure",
-        "description": "6 aday arasından 4 kişilik ekip kur. Bütçeyi dikkatli kullan.",
+        "description": "Select 4 hires from 6 candidates. Spend the budget carefully.",
+        "question": "Which mix balances technical strength and analytic coverage for the first crisis?",
         "stations": [
             {"name": "Assembly_Line", "dept": "Mekanik", "min": 70},
             {"name": "Planning_Office", "dept": "Analiz", "min": 60},
@@ -170,7 +171,8 @@ LEVELS: Dict[int, Dict[str, Any]] = {
     2: {
         "name": "Level 2: Expansion Shift",
         "crisis_name": "Quality Drift Alert",
-        "description": "3 aday arasından 1 kişi seç. Ekibin dengesini bozma.",
+        "description": "Select 1 new hire from 3 candidates. Keep the team balanced.",
+        "question": "Who strengthens your weakest department without breaking synergy?",
         "stations": [
             {"name": "Assembly_1", "dept": "Mekanik", "min": 75},
             {"name": "Assembly_2", "dept": "Mekanik", "min": 70},
@@ -185,7 +187,8 @@ LEVELS: Dict[int, Dict[str, Any]] = {
     3: {
         "name": "Level 3: Full Scale Rush",
         "crisis_name": "Supply Chain Lockdown",
-        "description": "4 aday arasından 2 kişi seç. Yüksek analiz puanı kritik.",
+        "description": "Select 2 hires from 4 candidates. High analytic power is critical.",
+        "question": "Can you pair a high-precision expert with a strong team player?",
         "stations": [
             {"name": "Production_1", "dept": "Mekanik", "min": 80},
             {"name": "Production_2", "dept": "Mekanik", "min": 80},
