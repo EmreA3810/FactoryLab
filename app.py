@@ -15,7 +15,9 @@ DEPARTMENTS = [
     "Department A (Production & Mechanical)",
     "Department B (R&D & Planning)",
 ]
-GAMS_BLUE = "#2f81f7"
+GAMS_BLUE = "#2dd4ff"
+NEON_MAGENTA = "#ff4fd8"
+NEON_AMBER = "#ffb347"
 SUCCESS_GREEN = "#3fb950"
 
 
@@ -65,20 +67,29 @@ def apply_dashboard_theme() -> None:
     st.markdown(
         f"""
         <style>
-        .stApp {{ background-color: #0f1115; color: #e6edf3; }}
+        .stApp {{
+            background:
+                radial-gradient(circle at 12% 14%, rgba(45, 212, 255, 0.18) 0%, rgba(45, 212, 255, 0) 36%),
+                radial-gradient(circle at 84% 20%, rgba(255, 79, 216, 0.14) 0%, rgba(255, 79, 216, 0) 34%),
+                radial-gradient(circle at 72% 82%, rgba(255, 179, 71, 0.12) 0%, rgba(255, 179, 71, 0) 30%),
+                linear-gradient(160deg, #111a2a 0%, #162337 55%, #19273d 100%);
+            color: #edf2f7;
+        }}
         section[data-testid="stSidebar"] {{
-            background-color: #111318;
-            border-right: 1px solid #1f232a;
+            background: linear-gradient(180deg, rgba(23, 34, 52, 0.95) 0%, rgba(20, 31, 47, 0.95) 100%);
+            border-right: 1px solid rgba(45, 212, 255, 0.25);
         }}
         .sticky-bar {{
             position: sticky;
             top: 0;
             z-index: 30;
-            background: #0f1115;
-            border: 1px solid #2a2d34;
+            background: rgba(24, 36, 55, 0.78);
+            border: 1px solid rgba(45, 212, 255, 0.4);
             border-radius: 12px;
             padding: 10px 14px;
             margin-bottom: 16px;
+            box-shadow: 0 0 0 1px rgba(45, 212, 255, 0.1), 0 8px 22px rgba(6, 12, 20, 0.35);
+            backdrop-filter: blur(4px);
         }}
         .sticky-grid {{
             display: grid;
@@ -86,12 +97,12 @@ def apply_dashboard_theme() -> None:
             gap: 12px;
         }}
         .sticky-item {{
-            background: #15171c;
-            border: 1px solid #2a2d34;
+            background: rgba(37, 51, 74, 0.86);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 10px;
             padding: 8px 12px;
         }}
-        .muted {{ color: #8b929c; }}
+        .muted {{ color: #b7c1d1; }}
         .accent {{ color: {GAMS_BLUE}; }}
         .success {{ color: {SUCCESS_GREEN}; }}
         .flip-card {{
@@ -101,8 +112,8 @@ def apply_dashboard_theme() -> None:
         }}
         .flip-card:hover .flip-card-front,
         .flip-card:hover .flip-card-back {{
-            border-color: #3a4659;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+            border-color: rgba(45, 212, 255, 0.72);
+            box-shadow: 0 0 0 1px rgba(45, 212, 255, 0.22), 0 10px 24px rgba(4, 14, 26, 0.42);
         }}
         .flip-card-inner {{
             position: relative;
@@ -119,10 +130,22 @@ def apply_dashboard_theme() -> None:
             width: 100%;
             height: 320px;
             backface-visibility: hidden;
-            background: linear-gradient(180deg, #171a21 0%, #14171d 100%);
-            border: 1px solid #2a2d34;
+            background: linear-gradient(180deg, rgba(42, 54, 76, 0.9) 0%, rgba(32, 44, 63, 0.9) 100%);
+            border: 1px solid rgba(45, 212, 255, 0.3);
             border-radius: 12px;
             padding: 14px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+        }}
+        .flip-card-front::before, .flip-card-back::before {{
+            content: "";
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            top: 8px;
+            height: 2px;
+            background: linear-gradient(90deg, {GAMS_BLUE}, {NEON_MAGENTA}, {NEON_AMBER});
+            opacity: 0.75;
+            border-radius: 999px;
         }}
         .flip-card-back {{
             transform: rotateY(180deg);
@@ -131,7 +154,7 @@ def apply_dashboard_theme() -> None:
             width: 62px;
             height: 62px;
             border-radius: 50%;
-            background: #202632;
+            background: linear-gradient(145deg, rgba(53, 73, 101, 0.95), rgba(43, 58, 82, 0.95));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -146,29 +169,35 @@ def apply_dashboard_theme() -> None:
             100% {{ box-shadow: 0 0 0 0 rgba(47, 129, 247, 0); }}
         }}
         .progress {{
-            background: #0f1115;
-            border: 1px solid #2a2d34;
+            background: rgba(23, 35, 52, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             height: 8px;
             border-radius: 999px;
             overflow: hidden;
         }}
         .progress-bar {{
-            background: {GAMS_BLUE};
+            background: linear-gradient(90deg, {GAMS_BLUE} 0%, {NEON_MAGENTA} 58%, {NEON_AMBER} 100%);
             height: 8px;
+            box-shadow: 0 0 10px rgba(45, 212, 255, 0.45);
         }}
         .consultant-box {{
-            background-color: #14171d;
-            border: 1px solid #2a2d34;
+            background: linear-gradient(180deg, rgba(44, 54, 73, 0.88) 0%, rgba(36, 47, 66, 0.88) 100%);
+            border: 1px solid rgba(255, 79, 216, 0.35);
             border-radius: 12px;
             padding: 12px 14px;
+            box-shadow: 0 0 0 1px rgba(255, 79, 216, 0.08), 0 8px 18px rgba(10, 10, 24, 0.24);
         }}
         .stButton>button {{
-            background-color: {GAMS_BLUE};
+            background: linear-gradient(90deg, rgba(24, 172, 214, 0.95), rgba(37, 131, 214, 0.95));
             color: #ffffff;
             border: 0;
+            box-shadow: 0 0 0 1px rgba(45, 212, 255, 0.35), 0 6px 16px rgba(8, 18, 31, 0.38);
+        }}
+        .stButton>button:hover {{
+            background: linear-gradient(90deg, rgba(41, 189, 231, 0.95), rgba(49, 145, 227, 0.95));
         }}
         .stButton>button:disabled {{
-            background-color: #3b4250;
+            background-color: #5a657d;
             color: #c9d1d9;
         }}
         </style>
