@@ -99,6 +99,11 @@ def apply_dashboard_theme() -> None:
             height: 320px;
             margin-bottom: 16px;
         }}
+        .flip-card:hover .flip-card-front,
+        .flip-card:hover .flip-card-back {{
+            border-color: #3a4659;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+        }}
         .flip-card-inner {{
             position: relative;
             width: 100%;
@@ -114,7 +119,7 @@ def apply_dashboard_theme() -> None:
             width: 100%;
             height: 320px;
             backface-visibility: hidden;
-            background: #15171c;
+            background: linear-gradient(180deg, #171a21 0%, #14171d 100%);
             border: 1px solid #2a2d34;
             border-radius: 12px;
             padding: 14px;
@@ -126,7 +131,7 @@ def apply_dashboard_theme() -> None:
             width: 62px;
             height: 62px;
             border-radius: 50%;
-            background: #1f232a;
+            background: #202632;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -441,7 +446,7 @@ def render_person_card(
         st.session_state[flip_key] = False
 
     flip_state = st.session_state.get(flip_key, False)
-    front_trait = info["hidden_trait"] if info["discovered"] else "Sırrı Bilinmiyor"
+    front_trait = info["hidden_trait"] if info["discovered"] else "Unknown"
     back_trait = (
         info["trait_description"]
         if info["discovered"]
