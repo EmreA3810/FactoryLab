@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import base64
 import random
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import streamlit as st
@@ -19,6 +21,15 @@ GAMS_BLUE = "#2dd4ff"
 NEON_MAGENTA = "#ff4fd8"
 NEON_AMBER = "#ffb347"
 SUCCESS_GREEN = "#3fb950"
+
+
+def get_factory_background_data_uri() -> str:
+    """Load local background image and return data URI for CSS usage."""
+    image_path = Path(__file__).resolve().parent / "assets" / "factory_background.png"
+    if not image_path.exists():
+        return ""
+    encoded = base64.b64encode(image_path.read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
 
 
 def level_total_budget(level_id: int) -> int:
@@ -64,15 +75,25 @@ def refresh_recruitment_candidates(level_id: int) -> None:
 
 def apply_dashboard_theme() -> None:
     """Endüstriyel, modern dashboard teması."""
+    bg_image_uri = get_factory_background_data_uri()
+    bg_layer = (
+        f'url("{bg_image_uri}") center / cover no-repeat fixed,'
+        if bg_image_uri
+        else ""
+    )
     st.markdown(
         f"""
         <style>
         .stApp {{
             background:
-                radial-gradient(circle at 12% 14%, rgba(45, 212, 255, 0.18) 0%, rgba(45, 212, 255, 0) 36%),
-                radial-gradient(circle at 84% 20%, rgba(255, 79, 216, 0.14) 0%, rgba(255, 79, 216, 0) 34%),
-                radial-gradient(circle at 72% 82%, rgba(255, 179, 71, 0.12) 0%, rgba(255, 179, 71, 0) 30%),
-                linear-gradient(160deg, #111a2a 0%, #162337 55%, #19273d 100%);
+                {bg_layer}
+                linear-gradient(160deg, #0f1a2a 0%, #13233a 55%, #172942 100%),
+                repeating-linear-gradient(90deg, rgba(45, 212, 255, 0.06) 0 2px, transparent 2px 120px),
+                repeating-linear-gradient(0deg, rgba(255, 79, 216, 0.03) 0 1px, transparent 1px 95px),
+                radial-gradient(circle at 14% 22%, rgba(45, 212, 255, 0.18) 0%, rgba(45, 212, 255, 0) 36%),
+                radial-gradient(circle at 86% 24%, rgba(255, 79, 216, 0.14) 0%, rgba(255, 79, 216, 0) 33%),
+                radial-gradient(circle at 72% 84%, rgba(255, 179, 71, 0.12) 0%, rgba(255, 179, 71, 0) 30%);
+            background-blend-mode: normal, overlay, screen, screen, normal, normal, normal;
             color: #edf2f7;
         }}
         section[data-testid="stSidebar"] {{
@@ -146,6 +167,45 @@ def apply_dashboard_theme() -> None:
             background: linear-gradient(90deg, {GAMS_BLUE}, {NEON_MAGENTA}, {NEON_AMBER});
             opacity: 0.75;
             border-radius: 999px;
+        }}
+        .card-top {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 8px 0 2px 0;
+            gap: 8px;
+        }}
+        .nameplate {{
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(45, 212, 255, 0.5);
+            background: rgba(16, 29, 46, 0.55);
+            box-shadow: 0 0 10px rgba(45, 212, 255, 0.18);
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }}
+        .rank-badge {{
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 79, 216, 0.5);
+            background: rgba(42, 17, 48, 0.45);
+            color: #ffd6fb;
+            white-space: nowrap;
+        }}
+        .role-line {{
+            margin-bottom: 4px;
+        }}
+        .salary-chip {{
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 179, 71, 0.55);
+            background: rgba(52, 37, 15, 0.35);
+            color: #ffd8a8;
+            font-size: 12px;
         }}
         .flip-card-back {{
             transform: rotateY(180deg);
@@ -484,14 +544,24 @@ def render_person_card(
     skill_percent = int(info["skill"])
     analysis_percent = int(info["analysis"])
     teamwork_percent = int(info["teamwork"])
+    total_power = int(info["skill"]) + int(info["analysis"]) + int(info["teamwork"])
+    if total_power >= 255:
+        rank_stars = "★★★"
+    elif total_power >= 220:
+        rank_stars = "★★"
+    else:
+        rank_stars = "★"
 
     card_html = f"""
     <div class="flip-card {'flipped' if flip_state else ''}">
         <div class="flip-card-inner">
             <div class="flip-card-front">
                 <div class="avatar">{info['avatar']}</div>
-                <h4>{name}</h4>
-                <div class="muted">{info['role']}</div>
+                <div class="card-top">
+                    <div class="nameplate">{name}</div>
+                    <div class="rank-badge">Rank {rank_stars}</div>
+                </div>
+                <div class="muted role-line">{info['role']}</div>
                 <div><strong>Technical:</strong> {info['skill']}/100</div>
                 <div class="progress" style="margin:6px 0;">
                     <div class="progress-bar" style="width: {skill_percent}%;"></div>
@@ -504,7 +574,7 @@ def render_person_card(
                 <div class="progress" style="margin:6px 0;">
                     <div class="progress-bar" style="width: {teamwork_percent}%;"></div>
                 </div>
-                <div><strong>Salary:</strong> {info['cost']} ₺</div>
+                <div class="salary-chip">Salary {info['cost']} ₺</div>
                 <div class="muted" style="margin-top:8px;">
                     <strong>Hidden Trait:</strong> {front_trait}
                 </div>
