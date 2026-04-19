@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from typing import Dict, List, Tuple
 
 import streamlit as st
@@ -29,6 +30,34 @@ def level_total_budget(level_id: int) -> int:
         previous_budget = int(LEVELS[level_id - 1].get("budget", 0))
         return previous_budget + increment
     return base_budget
+
+
+def get_recruitment_candidates(level_id: int) -> List[str]:
+    """Return current candidate list shown in recruitment stage for the level."""
+    level = LEVELS[level_id]
+    if "recruitment_candidates_by_level" not in st.session_state:
+        st.session_state.recruitment_candidates_by_level = {}
+    candidate_map = st.session_state.recruitment_candidates_by_level
+    if level_id not in candidate_map:
+        candidate_map[level_id] = list(level["candidates"])
+    return candidate_map[level_id]
+
+
+def refresh_recruitment_candidates(level_id: int) -> None:
+    """Refresh candidate cards with a random set from full data pool."""
+    level = LEVELS[level_id]
+    target_count = len(level["candidates"])
+    available = [
+        name
+        for name in EMPLOYEE_POOL.keys()
+        if name not in st.session_state.hired
+    ]
+    if not available:
+        return
+    pick_count = min(target_count, len(available))
+    st.session_state.recruitment_candidates_by_level[level_id] = random.sample(
+        available, pick_count
+    )
 
 
 def apply_dashboard_theme() -> None:
@@ -183,6 +212,8 @@ def initialize_state() -> None:
         st.session_state.current_crisis = LEVELS[st.session_state.level]["crisis_name"]
     if "level_cleared" not in st.session_state:
         st.session_state.level_cleared = False
+    if "recruitment_candidates_by_level" not in st.session_state:
+        st.session_state.recruitment_candidates_by_level = {}
 
 
 def reset_level(level_id: int, carryover_budget: int | None = None) -> None:
@@ -209,6 +240,7 @@ def reset_level(level_id: int, carryover_budget: int | None = None) -> None:
     st.session_state.performance_bonus = 0
     st.session_state.current_crisis = level["crisis_name"]
     st.session_state.level_cleared = False
+    st.session_state.recruitment_candidates_by_level[level_id] = list(level["candidates"])
 
 
 def trait_team_effect(employee_name: str, team_size: int) -> int:
@@ -466,6 +498,11 @@ def render_recruitment(level: Dict[str, object]) -> None:
     level = LEVELS[st.session_state.level]
     st.markdown("## Recruitment Stage")
     st.write(level["description"])
+    top_cols = st.columns([3, 1])
+    with top_cols[1]:
+        if st.button("🔄 Refresh Candidates", use_container_width=True):
+            refresh_recruitment_candidates(st.session_state.level)
+            st.rerun()
     question = level.get("question")
     if question:
         st.info(question)
@@ -477,7 +514,7 @@ def render_recruitment(level: Dict[str, object]) -> None:
         f"Selected: **{hires_added}** / Remaining: **{remaining_hires}**"
     )
 
-    candidate_names = level["candidates"]
+    candidate_names = get_recruitment_candidates(st.session_state.level)
     for row_start in range(0, len(candidate_names), 3):
         cols = st.columns(3)
         for col, name in zip(cols, candidate_names[row_start:row_start + 3]):
