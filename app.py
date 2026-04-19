@@ -18,6 +18,19 @@ GAMS_BLUE = "#2f81f7"
 SUCCESS_GREEN = "#3fb950"
 
 
+def level_total_budget(level_id: int) -> int:
+    """Compute total budget for level from base or incremental definition."""
+    level = LEVELS[level_id]
+    base_budget = int(level.get("budget", 0))
+    if level_id == 1:
+        return base_budget
+    increment = int(level.get("budget_increase", 0))
+    if increment > 0:
+        previous_budget = int(LEVELS[level_id - 1].get("budget", 0))
+        return previous_budget + increment
+    return base_budget
+
+
 def apply_dashboard_theme() -> None:
     """Endüstriyel, modern dashboard teması."""
     st.markdown(
@@ -137,8 +150,11 @@ def initialize_state() -> None:
     if "stage" not in st.session_state:
         st.session_state.stage = "recruitment"
     if "level_budget" not in st.session_state:
-        level = LEVELS[st.session_state.level]
-        st.session_state.level_budget = level["budget"] + level.get("bonus_budget", 0)
+        level_id = st.session_state.level
+        level = LEVELS[level_id]
+        st.session_state.level_budget = (
+            level_total_budget(level_id) + int(level.get("bonus_budget", 0))
+        )
     if "budget" not in st.session_state:
         st.session_state.budget = st.session_state.level_budget
     if "hired" not in st.session_state:
@@ -165,15 +181,24 @@ def initialize_state() -> None:
         st.session_state.last_bonus_awarded_day = 0
     if "current_crisis" not in st.session_state:
         st.session_state.current_crisis = LEVELS[st.session_state.level]["crisis_name"]
+    if "level_cleared" not in st.session_state:
+        st.session_state.level_cleared = False
 
 
-def reset_level(level_id: int) -> None:
+def reset_level(level_id: int, carryover_budget: int | None = None) -> None:
     """Yeni seviyeye geçişte state resetler."""
     level = LEVELS[level_id]
     st.session_state.level = level_id
     st.session_state.stage = "recruitment"
+    if level_id == 1:
+        next_budget = level_total_budget(level_id)
+    else:
+        base_budget = (
+            st.session_state.budget if carryover_budget is None else int(carryover_budget)
+        )
+        next_budget = base_budget + int(level.get("budget_increase", 0))
     st.session_state.level_budget = (
-        level["budget"] + level.get("bonus_budget", 0) + st.session_state.performance_bonus
+        next_budget + int(level.get("bonus_budget", 0)) + st.session_state.performance_bonus
     )
     st.session_state.budget = st.session_state.level_budget
     st.session_state.hires_at_level_start = len(st.session_state.hired)
@@ -183,6 +208,7 @@ def reset_level(level_id: int) -> None:
     st.session_state.last_city_health = st.session_state.city_health
     st.session_state.performance_bonus = 0
     st.session_state.current_crisis = level["crisis_name"]
+    st.session_state.level_cleared = False
 
 
 def trait_team_effect(employee_name: str, team_size: int) -> int:
@@ -678,6 +704,7 @@ def render_crisis(level: Dict[str, object]) -> None:
         else:
             st.session_state.city_health = min(100.0, st.session_state.city_health + 15)
             st.success("Crisis resolved! You passed the threshold.")
+            st.session_state.level_cleared = True
             current_day = len(st.session_state.crisis_history) + 1
             if (
                 efficiency_score >= 90
@@ -687,15 +714,7 @@ def render_crisis(level: Dict[str, object]) -> None:
                 st.session_state.performance_bonus += 500
                 st.session_state.last_bonus_awarded_day = current_day
                 st.info("Excellence Bonus: +500 ₺ added to next level.")
-            if st.session_state.level < max(LEVELS.keys()):
-                next_level = st.session_state.level + 1
-                bonus = LEVELS[next_level].get("bonus_budget", 0) + st.session_state.performance_bonus
-                if bonus:
-                    st.info(f"Next level budget bonus: +{bonus} ₺")
-                if st.button("➡️ Next Level"):
-                    reset_level(next_level)
-                    st.rerun()
-            else:
+            if st.session_state.level >= max(LEVELS.keys()):
                 st.info("Congrats! All levels completed for now.")
 
         st.session_state.crisis_history.append(
@@ -718,6 +737,19 @@ def render_crisis(level: Dict[str, object]) -> None:
             }
         )
         st.line_chart(df[["Your Score", "GAMS Optimum", "City Efficiency", "Efficiency (%)"]])
+
+    if st.session_state.level_cleared and st.session_state.level < max(LEVELS.keys()):
+        next_level = st.session_state.level + 1
+        next_level_increase = int(LEVELS[next_level].get("budget_increase", 0))
+        bonus = int(LEVELS[next_level].get("bonus_budget", 0)) + st.session_state.performance_bonus
+        total_gain = next_level_increase + bonus
+        if total_gain:
+            st.info(f"Next level budget gain: +{total_gain} ₺")
+        if st.button("➡️ Next Level", key="next_level_persist"):
+            reset_level(next_level, carryover_budget=st.session_state.budget)
+            # Force immediate rerender with the new level's question/crisis text.
+            st.session_state.current_crisis = LEVELS[next_level]["crisis_name"]
+            st.rerun()
 
 
 def main() -> None:
