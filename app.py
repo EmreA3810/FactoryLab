@@ -369,7 +369,7 @@ def render_sticky_top_bar(budget: int, efficiency: float) -> None:
                     <strong>{budget} ₺</strong>
                 </div>
                 <div class="sticky-item">
-                    <div class="muted">Current Efficiency</div>
+                    <div class="muted">Current Factory Efficiency</div>
                     <strong>{efficiency:.0f}%</strong>
                 </div>
             </div>
@@ -388,9 +388,9 @@ def render_top_metrics() -> None:
     with col1:
         st.metric("Budget", f"{st.session_state.budget} ₺")
     with col2:
-        st.metric("Current Efficiency", f"{efficiency:.0f}%", f"{delta:+.0f}%")
+        st.metric("Factory Efficiency", f"{efficiency:.0f}%", f"{delta:+.0f}%")
     with col3:
-        st.progress(efficiency / 100, text="City Efficiency")
+        st.progress(efficiency / 100, text="Factory Efficiency")
 
 
 def render_consultant_box() -> None:
@@ -498,6 +498,7 @@ def render_recruitment(level: Dict[str, object]) -> None:
     level = LEVELS[st.session_state.level]
     st.markdown("## Recruitment Stage")
     st.write(level["description"])
+    st.warning("⚠️ Choose carefully based on your budget.")
     top_cols = st.columns([3, 1])
     with top_cols[1]:
         if st.button("🔄 Refresh Candidates", use_container_width=True):
@@ -619,7 +620,7 @@ def update_consultant_message(assignments: Dict[str, str]) -> None:
 def render_crisis(level: Dict[str, object]) -> None:
     """Crisis stage."""
     level = LEVELS[st.session_state.level]
-    st.markdown("## Daily Crisis")
+    st.markdown(f"## Daily Crisis - Level {st.session_state.level}")
     st.subheader(st.session_state.current_crisis)
     question = level.get("question")
     if question:
@@ -760,7 +761,7 @@ def render_crisis(level: Dict[str, object]) -> None:
                 "Your Score": user_score,
                 "GAMS Optimum": gams_score,
                 "Verimlilik (%)": efficiency_score,
-                "City Efficiency": st.session_state.city_health,
+                "Factory Efficiency": st.session_state.city_health,
             }
         )
 
@@ -773,7 +774,7 @@ def render_crisis(level: Dict[str, object]) -> None:
                 "Verimlilik (%)": "Efficiency (%)",
             }
         )
-        st.line_chart(df[["Your Score", "GAMS Optimum", "City Efficiency", "Efficiency (%)"]])
+        st.line_chart(df[["Your Score", "GAMS Optimum", "Factory Efficiency", "Efficiency (%)"]])
 
     if st.session_state.level_cleared and st.session_state.level < max(LEVELS.keys()):
         next_level = st.session_state.level + 1

@@ -7,7 +7,7 @@ from typing import Any, Dict
 # 1. İK Aday Havuzu (Personel Kartları)
 EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
     "Arda": {
-        "role": "Mekanik Mühendisi",
+        "role": "Mechanical Engineer",
         "skill": 92,
         "analysis": 40,
         "teamwork": 55,
@@ -18,7 +18,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Merve": {
-        "role": "Analiz Mühendisi",
+        "role": "Analysis Engineer",
         "skill": 60,
         "analysis": 95,
         "teamwork": 88,
@@ -29,7 +29,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Demir": {
-        "role": "Mekanik Mühendisi",
+        "role": "Mechanical Engineer",
         "skill": 85,
         "analysis": 30,
         "teamwork": 90,
@@ -40,7 +40,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Can": {
-        "role": "Süreç Mühendisi",
+        "role": "Process Engineer",
         "skill": 72,
         "analysis": 65,
         "teamwork": 45,
@@ -51,7 +51,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Selin": {
-        "role": "Planlama Uzmanı",
+        "role": "Planning Specialist",
         "skill": 40,
         "analysis": 85,
         "teamwork": 95,
@@ -62,7 +62,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Eda": {
-        "role": "Genel Uzman",
+        "role": "General Specialist",
         "skill": 65,
         "analysis": 60,
         "teamwork": 70,
@@ -73,7 +73,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Kaan": {
-        "role": "Üretim Uzmanı",
+        "role": "Production Specialist",
         "skill": 88,
         "analysis": 70,
         "teamwork": 60,
@@ -84,7 +84,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Asli": {
-        "role": "Analiz Mühendisi",
+        "role": "Analysis Engineer",
         "skill": 50,
         "analysis": 92,
         "teamwork": 80,
@@ -95,7 +95,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Deniz": {
-        "role": "Çok Yönlü Uzman",
+        "role": "Multi-Skilled Specialist",
         "skill": 75,
         "analysis": 75,
         "teamwork": 75,
@@ -106,7 +106,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Umut": {
-        "role": "Kıdemli Uzman",
+        "role": "Senior Specialist",
         "skill": 95,
         "analysis": 50,
         "teamwork": 40,
@@ -117,7 +117,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Seda": {
-        "role": "Ar-Ge Uzmanı",
+        "role": "R&D Specialist",
         "skill": 45,
         "analysis": 98,
         "teamwork": 90,
@@ -128,7 +128,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Burak": {
-        "role": "Süreç Mühendisi",
+        "role": "Process Engineer",
         "skill": 82,
         "analysis": 82,
         "teamwork": 50,
@@ -139,7 +139,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Nil": {
-        "role": "Planlama Uzmanı",
+        "role": "Planning Specialist",
         "skill": 60,
         "analysis": 60,
         "teamwork": 98,
@@ -150,7 +150,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Emir": {
-        "role": "Operasyon Asistanı",
+        "role": "Operations Assistant",
         "skill": 66,
         "analysis": 58,
         "teamwork": 72,
@@ -161,7 +161,7 @@ EMPLOYEE_POOL: Dict[str, Dict[str, Any]] = {
         "discovered": False,
     },
     "Derya": {
-        "role": "Kalite Asistanı",
+        "role": "Quality Assistant",
         "skill": 58,
         "analysis": 68,
         "teamwork": 64,
